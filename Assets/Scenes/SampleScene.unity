@@ -119,6 +119,73 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &466787058
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 466787060}
+  - component: {fileID: 466787059}
+  m_Layer: 0
+  m_Name: ObstaclePool
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &466787059
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 466787058}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 23186ab556b41614a999105be420f968, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ObstaclePool
+  obstacleTypes:
+  - typeName: Rock
+    variants:
+    - {fileID: 8839504571041582006, guid: 711f38e2e02bfdf4a82c3e6796417501, type: 3}
+    - {fileID: 949898070752560208, guid: f6972cc90333b884a99ec70d445ac627, type: 3}
+    - {fileID: 7765709139460214909, guid: 2e6d77c7695ccc54e86086bfd701ef62, type: 3}
+  - typeName: Tree
+    variants:
+    - {fileID: 1816734830750808403, guid: b5c4b00a76b16e84fa2a36e7b8a5b32e, type: 3}
+    - {fileID: 228583042080850795, guid: cc081ce22dc6fd94e9bb6f670243a8b8, type: 3}
+    - {fileID: 6825623080854928714, guid: 9baf5f62522081b45acf9325e7d210e3, type: 3}
+    - {fileID: 1968541612356242826, guid: e83b69896a207e14d8e06736a5e04e8b, type: 3}
+    - {fileID: 8384959077939386019, guid: 68468e33cc0710f428547bfbca25555c, type: 3}
+    - {fileID: 6681731308098958195, guid: e87c27216de53624d921038be965976f, type: 3}
+    - {fileID: 3205393884885610426, guid: cdf002c7e4865914ab16f0a43461a2c5, type: 3}
+    - {fileID: 6814353532343764023, guid: 0c8a5fe7726cfae4b960ba4fe609d696, type: 3}
+  - typeName: Pond
+    variants:
+    - {fileID: 3285010946500826177, guid: ffb87b6d4ebee77458cb52dbb1e6bc89, type: 3}
+  poolSizePerType: 10
+  minDistanceZ: 15
+  laneOffsetX: 5
+  lanes: 3
+--- !u!4 &466787060
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 466787058}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -12.0483, y: 211.91623, z: 1169.6996}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &705507993
 GameObject:
   m_ObjectHideFlags: 0
@@ -320,3 +387,4 @@ SceneRoots:
   - {fileID: 705507995}
   - {fileID: 1014216907}
   - {fileID: 1193121167}
+  - {fileID: 466787060}
