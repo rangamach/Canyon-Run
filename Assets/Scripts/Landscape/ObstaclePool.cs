@@ -1,6 +1,3 @@
-
-
-
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -8,60 +5,73 @@ using UnityEngine;
 [System.Serializable]
 public class ObstacleType
 {
-    public string typeName;       // "Rock", "Tree", "Pond"
-    public Transform[] variants;  // Prefab variants
+    public string typeName;          // "Rock", "Tree", "Pond"
+    public Transform[] variants;     // All variants of this type
+    public float weight = 1f;        // Spawn probability (higher = more common)
 }
 
 public class ObstaclePool : MonoBehaviour
 {
-    [Header("Obstacle Types")]
+    [Header("Obstacle Types (Set Weights Here)")]
     public ObstacleType[] obstacleTypes;
+    // EXAMPLE:
+    // Rock weight = 5  (most common)
+    // Tree weight = 3  (common)
+    // Pond weight = 1  (rare)
 
     [Header("Pool Settings")]
     public int poolSizePerType = 10;
-    public float minDistanceZ = 35f;   // Minimum distance between obstacles
-    public float laneOffsetX = 5f;     // Distance between lanes
+    public float minDistanceZ = 35f;
+    public float laneOffsetX = 5f;
     public int lanes = 5;
 
-    [Header("References")]
     private Transform player;
 
-    private List<Transform> pool = new List<Transform>();
-    private List<Transform> activeObstacles = new List<Transform>();
+    // Pool per obstacle TYPE
+    private List<List<Transform>> poolsByType = new List<List<Transform>>();
 
+    private List<Transform> activeObstacles = new List<Transform>();
     private float lastSpawnZ = 0f;
 
     private void Start()
     {
         StartCoroutine(SetPlayer());
-
-        // Initialize pool
-        foreach (var type in obstacleTypes)
-        {
-            for (int i = 0; i < poolSizePerType; i++)
-            {
-                Transform variant = type.variants[Random.Range(0, type.variants.Length)];
-                Transform obs = Instantiate(variant, Vector3.one * 9999f, Quaternion.identity);
-                obs.gameObject.SetActive(false);
-                pool.Add(obs);
-            }
-        }
+        InitializePool();
     }
+
     private IEnumerator SetPlayer()
     {
         while (FindAnyObjectByType<PlayerView>() == null)
-        {
             yield return null;
-        }
 
-        this.player = FindAnyObjectByType<PlayerView>().transform;
+        player = FindAnyObjectByType<PlayerView>().transform;
+    }
+
+    private void InitializePool()
+    {
+        poolsByType.Clear();
+
+        foreach (var type in obstacleTypes)
+        {
+            List<Transform> typePool = new List<Transform>();
+
+            for (int i = 0; i < poolSizePerType; i++)
+            {
+                Transform prefab = type.variants[Random.Range(0, type.variants.Length)];
+                Transform obj = Instantiate(prefab, Vector3.one * 9999f, Quaternion.identity);
+                obj.gameObject.SetActive(false);
+                typePool.Add(obj);
+            }
+
+            poolsByType.Add(typePool);
+        }
     }
 
     private void Update()
     {
         if (player == null) return;
 
-        // Spawn obstacles ahead
+        // Keep spawning ahead
         while (lastSpawnZ < player.position.z + 100f)
         {
             SpawnObstacleRow(lastSpawnZ + minDistanceZ);
@@ -81,31 +91,105 @@ public class ObstaclePool : MonoBehaviour
 
     private void SpawnObstacleRow(float zPos)
     {
-        // Pick one lane to leave free
-        int freeLane = Random.Range(0, lanes);
+        int freeSlot = Random.Range(0, lanes);
 
-        for (int lane = 0; lane < lanes; lane++)
+        List<Vector3> usedPositions = new List<Vector3>();
+
+        for (int i = 0; i < lanes; i++)
         {
-            if (lane == freeLane) continue; // skip free lane
+            if (i == freeSlot)
+                continue;
 
-            Transform obstacle = GetPooledObstacle();
-            if (obstacle == null) return;
+            int typeIndex = GetWeightedRandomType();
+            Transform obstacle = GetPooledObstacle(typeIndex);
+            if (obstacle == null)
+                continue;
 
-            float xPos = (lane - 1) * laneOffsetX; // assuming 3 lanes: -5,0,5
+            float xPos = 0f;
+            bool valid = false;
+            int attempts = 0;
+
+            while (!valid && attempts < 15)
+            {
+                attempts++;
+
+                // Random X position
+                xPos = Random.Range(-20f, 20f);
+
+                // Calculate obstacle width using its child colliders
+                float width = GetObstacleWidth(obstacle);
+
+                valid = true;
+
+                // Check against previously placed obstacles in this row
+                foreach (var pos in usedPositions)
+                {
+                    float otherWidth = pos.z; // stored as width in z field
+
+                    if (Mathf.Abs(xPos - pos.x) < (width + otherWidth) * 0.6f)
+                    {
+                        valid = false;
+                        break;
+                    }
+                }
+            }
+
+            if (!valid)
+                continue;
+
+            // Store X AND width (in pos.z field)
+            usedPositions.Add(new Vector3(xPos, 0, GetObstacleWidth(obstacle)));
+
             obstacle.position = new Vector3(xPos, 0f, zPos);
             obstacle.rotation = Quaternion.identity;
             obstacle.gameObject.SetActive(true);
+
             activeObstacles.Add(obstacle);
         }
     }
-
-    private Transform GetPooledObstacle()
+    private float GetObstacleWidth(Transform obstacle)
     {
-        foreach (var obs in pool)
+        Collider[] colliders = obstacle.GetComponentsInChildren<Collider>();
+
+        if (colliders.Length == 0)
+            return 1f; // fallback small width
+
+        Bounds bounds = colliders[0].bounds;
+
+        foreach (var col in colliders)
+            bounds.Encapsulate(col.bounds);
+
+        return bounds.size.x / 2f;  // half width ? radius for spacing
+    }
+
+    // Weighted random: higher weight = more chance
+    private int GetWeightedRandomType()
+    {
+        float total = 0f;
+        foreach (var type in obstacleTypes)
+            total += type.weight;
+
+        float rand = Random.value * total;
+
+        for (int i = 0; i < obstacleTypes.Length; i++)
         {
-            if (!obs.gameObject.activeInHierarchy)
-                return obs;
+            if (rand < obstacleTypes[i].weight)
+                return i;
+
+            rand -= obstacleTypes[i].weight;
         }
-        return null; // all in use
+
+        return obstacleTypes.Length - 1;
+    }
+
+    private Transform GetPooledObstacle(int typeIndex)
+    {
+        foreach (var obj in poolsByType[typeIndex])
+        {
+            if (!obj.gameObject.activeSelf)
+                return obj;
+        }
+
+        return null; // Pool empty (rare)
     }
 }
