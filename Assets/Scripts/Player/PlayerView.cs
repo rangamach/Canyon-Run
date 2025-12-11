@@ -1,14 +1,17 @@
-using Unity.Android.Gradle;
 using UnityEngine;
 
 public class PlayerView : MonoBehaviour
 {
     private PlayerInputAction pia;
     private PlayerController playerController;
+    private UIService uiService;
     private Animator anim;
     private Rigidbody rb;
     private Camera mainCamera;
     private float moveInput;
+    private bool isGrounded;
+    private bool jumpPressed;
+    private bool jumpWasPressedLastFrame;
 
     [SerializeField] private float runSpeed;
     [SerializeField] private float jumpForce;
@@ -24,6 +27,11 @@ public class PlayerView : MonoBehaviour
         SpawnPlayer();
         SetupInput();
         CreateCamera();
+    }
+    private void Start()
+    {
+        this.isGrounded = true;
+        this.uiService = GameService.Instance.UIService();
     }
     private void SpawnPlayer()
     {
@@ -66,6 +74,34 @@ public class PlayerView : MonoBehaviour
     {
         this.mainCamera.transform.position = new Vector3(0f, 15f, transform.position.z - 20f);
     }
+    private void Update()
+    {
+        isGrounded = Physics.CheckSphere(groundCheck.position, groundCheckRadius, groundLayer);
+        anim.SetBool("Grounded", isGrounded);
+
+        CheckIfUIButtonPressed();
+    }
+    private void CheckIfUIButtonPressed()
+    {
+        if ((uiService.IsLeftPressed() && uiService.IsRightPressed()) || (!uiService.IsLeftPressed() && !uiService.IsRightPressed())) moveInput = 0;
+        else if (uiService.IsLeftPressed()) moveInput = -1;
+        else if (uiService.IsRightPressed()) moveInput = 1;
+
+        // Edge detection for jump
+        jumpPressed = uiService.IsJumpPressed();
+        bool jumpJustPressed = jumpPressed && !jumpWasPressedLastFrame;
+
+        if (jumpJustPressed)
+            Jump();
+
+        jumpWasPressedLastFrame = jumpPressed;
+
+        // Horizontal input (example)
+        if (uiService.IsLeftPressed()) moveInput = -1f;
+        else if (uiService.IsRightPressed()) moveInput = 1f;
+        else moveInput = 0f;
+    }
+
     private void FixedUpdate()
     {
         MovePlayer();
@@ -76,7 +112,6 @@ public class PlayerView : MonoBehaviour
     }
     private void MoveCamera()
     {
-        //Vector3 targetPosition = new Vector3(0f, 15f, transform.position.z - 20f);
         Vector3 targetPosition = new Vector3(0f, transform.position.y + 15f, transform.position.z - 20f);
 
         this.mainCamera.transform.position = targetPosition;
@@ -84,32 +119,28 @@ public class PlayerView : MonoBehaviour
 
     private void MovePlayer()
     {
-        Vector3 position = rb.position;
+        Vector3 velocity = rb.linearVelocity;
 
-        // Keep Y from physics (jump)
-        float y = position.y;
-
-        // Forward movement
-        position.z += runSpeed * Time.fixedDeltaTime;
+        // Forward speed
+        velocity.z = runSpeed;
 
         // Side movement
-        position.x += moveInput * runSpeed * 0.5f * Time.fixedDeltaTime;
+        velocity.x = moveInput * runSpeed * 0.5f;
 
-        // Clamp X
-        position.x = Mathf.Clamp(position.x, -20f, 20f);
+        // Apply
+        rb.linearVelocity = velocity;
 
-        // PUT BACK physics-based Y
-        position.y = y;
-
-        rb.MovePosition(position);
+        // Clamp X manually
+        Vector3 pos = transform.position;
+        pos.x = Mathf.Clamp(pos.x, -20f, 20f);
+        transform.position = pos;
 
         anim.SetFloat("Speed", 1);
     }
 
     private void Jump()
     {
-        bool grounded = Physics.CheckSphere(groundCheck.position, groundCheckRadius, groundLayer);
-        if (grounded)
+        if(isGrounded)
         {
             rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
             anim.SetTrigger("Jump");
