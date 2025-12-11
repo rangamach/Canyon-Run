@@ -2014,6 +2014,9 @@ MonoBehaviour:
   groundLayer:
     serializedVersion: 2
     m_Bits: 64
+  obstacleLayer:
+    serializedVersion: 2
+    m_Bits: 128
 --- !u!1 &6133198070883687513
 GameObject:
   m_ObjectHideFlags: 0

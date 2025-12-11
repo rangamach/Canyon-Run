@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 603047013804463744}
   - component: {fileID: 6716212462685502742}
   - component: {fileID: 7020730011098310340}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Plane.005
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -98,7 +98,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3285010946500826177}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Pond
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -133,7 +133,7 @@ GameObject:
   - component: {fileID: 3487493267556027255}
   - component: {fileID: 8486556814829841580}
   - component: {fileID: 1907763079846242722}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Plane.004
   m_TagString: Untagged
   m_Icon: {fileID: 0}

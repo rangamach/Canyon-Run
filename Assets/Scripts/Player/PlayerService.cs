@@ -5,4 +5,6 @@ public class PlayerService
     {
         this.playerController = new PlayerController(playerSO.Prefab);
     }
+    public void RestartPlayer() => playerController.RestartPlayer();
+    public void SetHasDied(bool toggle) => playerController.SetHasDied(toggle);
 }

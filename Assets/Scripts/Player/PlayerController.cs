@@ -10,4 +10,6 @@ public class PlayerController
         playerView = UnityEngine.Object.Instantiate(prefab);
         playerView.SetController(this);
     }
+    public void RestartPlayer() => playerView.RestartPlayer();
+    public void SetHasDied(bool toggle) => playerView.hasDied = toggle;
 }

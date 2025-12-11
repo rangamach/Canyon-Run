@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 3097161597836329644}
   - component: {fileID: 2003582182527420669}
   - component: {fileID: 6625571591219624690}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Rock_Arc
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -121,7 +121,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 9090580451766511978}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Rock Arc
   m_TagString: Untagged
   m_Icon: {fileID: 0}

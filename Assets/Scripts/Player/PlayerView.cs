@@ -12,12 +12,16 @@ public class PlayerView : MonoBehaviour
     private bool isGrounded;
     private bool jumpPressed;
     private bool jumpWasPressedLastFrame;
+    private float distanceTravelled = 0f;
+    private float lastZPosition = 0f;
+    public bool hasDied;
 
     [SerializeField] private float runSpeed;
     [SerializeField] private float jumpForce;
     [SerializeField] private Transform groundCheck;
     [SerializeField] private float groundCheckRadius;
     [SerializeField] private LayerMask groundLayer;
+    [SerializeField] private LayerMask obstacleLayer;
 
     private void Awake()
     {
@@ -30,8 +34,11 @@ public class PlayerView : MonoBehaviour
     }
     private void Start()
     {
+        this.hasDied = true;
         this.isGrounded = true;
         this.uiService = GameService.Instance.UIService();
+
+        lastZPosition = transform.position.z;
     }
     private void SpawnPlayer()
     {
@@ -83,6 +90,8 @@ public class PlayerView : MonoBehaviour
     }
     private void CheckIfUIButtonPressed()
     {
+        if (hasDied) return;
+
         if ((uiService.IsLeftPressed() && uiService.IsRightPressed()) || (!uiService.IsLeftPressed() && !uiService.IsRightPressed())) moveInput = 0;
         else if (uiService.IsLeftPressed()) moveInput = -1;
         else if (uiService.IsRightPressed()) moveInput = 1;
@@ -104,11 +113,30 @@ public class PlayerView : MonoBehaviour
 
     private void FixedUpdate()
     {
+        if (hasDied) return;
+
         MovePlayer();
+        CalculateDistance();
     }
     private void LateUpdate()
     {
         MoveCamera();
+    }
+    private void OnCollisionEnter(Collision collision)
+    {
+        if(collision.gameObject.layer == LayerMask.NameToLayer("Obstacle"))
+        {
+            //game over...
+            hasDied = true;
+            if (distanceTravelled > PlayerPrefs.GetFloat("Best"))
+            {
+                PlayerPrefs.SetFloat("Best", distanceTravelled);
+                PlayerPrefs.Save();
+            }
+            anim.SetTrigger("Death");
+
+            uiService.GameOverUI();
+        }
     }
     private void MoveCamera()
     {
@@ -145,6 +173,38 @@ public class PlayerView : MonoBehaviour
             rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
             anim.SetTrigger("Jump");
         }
+    }
+
+    private void CalculateDistance()
+    {
+        float deltaZ = transform.position.z - lastZPosition;
+
+        if(deltaZ > 0)
+        {
+            distanceTravelled += deltaZ;
+        }
+
+        lastZPosition = transform.position.z;
+
+        if(uiService)
+        {
+            uiService.UpdateDistanceText(distanceTravelled);
+        }
+    }
+
+    public void RestartPlayer()
+    {
+        transform.position = Vector3.zero;
+        MoveCamera();
+
+        lastZPosition = transform.position.z;
+        distanceTravelled = 0;
+
+        uiService.UpdateDistanceText(distanceTravelled);
+
+        anim.SetTrigger("Restart");
+
+        hasDied = false;
     }
 
     public void SetController(PlayerController controller) => this.playerController = controller;

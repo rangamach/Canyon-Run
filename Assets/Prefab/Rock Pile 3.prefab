@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7765709139460214909}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Rock Pile 3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -44,7 +44,7 @@ GameObject:
   - component: {fileID: 6538109525799029307}
   - component: {fileID: 7994005454812167112}
   - component: {fileID: 5774875508618390016}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Rock_Pile_3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
