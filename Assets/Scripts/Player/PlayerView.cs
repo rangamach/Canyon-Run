@@ -7,6 +7,7 @@ public class PlayerView : MonoBehaviour
     private UIService uiService;
     private Animator anim;
     private Rigidbody rb;
+    private AudioSource audioSource;
     private Camera mainCamera;
     private float moveInput;
     private bool isGrounded;
@@ -15,6 +16,7 @@ public class PlayerView : MonoBehaviour
     private float distanceTravelled = 0f;
     private float lastZPosition = 0f;
     public bool hasDied;
+    private AudioClip runningAudioClip;
 
     [SerializeField] private float runSpeed;
     [SerializeField] private float jumpForce;
@@ -26,10 +28,11 @@ public class PlayerView : MonoBehaviour
     private void Awake()
     {
         anim = GetComponent<Animator>();
-        rb = GetComponent<Rigidbody>(); 
+        rb = GetComponent<Rigidbody>();
+        audioSource = GetComponent<AudioSource>();
 
         SpawnPlayer();
-        SetupInput();
+        //SetupInput();
         CreateCamera();
     }
     private void Start()
@@ -39,6 +42,10 @@ public class PlayerView : MonoBehaviour
         this.uiService = GameService.Instance.UIService();
 
         lastZPosition = transform.position.z;
+
+        runningAudioClip = GameService.Instance.SoundService.GetClip(SoundTypes.Running);
+        audioSource.loop = true;
+        audioSource.clip = runningAudioClip;
     }
     private void SpawnPlayer()
     {
@@ -52,17 +59,17 @@ public class PlayerView : MonoBehaviour
         transform.rotation = Quaternion.identity;
         transform.localScale = Vector3.one;
     }
-    private void SetupInput()
-    {
-        pia = new PlayerInputAction();
+    //private void SetupInput()
+    //{
+    //    pia = new PlayerInputAction();
 
-        pia.Movement.Move.performed += ctx => moveInput = ctx.ReadValue<float>();
-        pia.Movement.Move.canceled += ctx => moveInput = 0f;
+    //    pia.Movement.Move.performed += ctx => moveInput = ctx.ReadValue<float>();
+    //    pia.Movement.Move.canceled += ctx => moveInput = 0f;
 
-        pia.Movement.Jump.performed += ctx => Jump();
+    //    pia.Movement.Jump.performed += ctx => Jump();
 
-        pia.Enable();
-    }
+    //    pia.Enable();
+    //}
     private void CreateCamera()
     {
         GameObject camera = new GameObject("MainCamera");
@@ -83,6 +90,8 @@ public class PlayerView : MonoBehaviour
     }
     private void Update()
     {
+        if (hasDied) return;
+
         isGrounded = Physics.CheckSphere(groundCheck.position, groundCheckRadius, groundLayer);
         anim.SetBool("Grounded", isGrounded);
 
@@ -120,20 +129,27 @@ public class PlayerView : MonoBehaviour
     }
     private void LateUpdate()
     {
+        if (hasDied) return;
+
         MoveCamera();
     }
     private void OnCollisionEnter(Collision collision)
     {
         if(collision.gameObject.layer == LayerMask.NameToLayer("Obstacle"))
         {
-            //game over...
-            hasDied = true;
+            if(!hasDied)
+            {
+                hasDied = true;
+                audioSource.Pause();
+                anim.SetTrigger("Death");
+                GameService.Instance.SoundService.PlaySFX(SoundTypes.Death);
+            }
+
             if (distanceTravelled > PlayerPrefs.GetFloat("Best"))
             {
                 PlayerPrefs.SetFloat("Best", distanceTravelled);
                 PlayerPrefs.Save();
             }
-            anim.SetTrigger("Death");
 
             uiService.GameOverUI();
         }
@@ -145,15 +161,20 @@ public class PlayerView : MonoBehaviour
         this.mainCamera.transform.position = targetPosition;
     }
 
+
     private void MovePlayer()
     {
         Vector3 velocity = rb.linearVelocity;
 
+        // ?? Increase speed as distance increases  
+        float speedMultiplier = 1f + (distanceTravelled / 1000f);
+        float currentSpeed = runSpeed * speedMultiplier;
+
         // Forward speed
-        velocity.z = runSpeed;
+        velocity.z = currentSpeed;
 
         // Side movement
-        velocity.x = moveInput * runSpeed * 0.5f;
+        velocity.x = moveInput * currentSpeed * 0.5f;
 
         // Apply
         rb.linearVelocity = velocity;
@@ -163,6 +184,12 @@ public class PlayerView : MonoBehaviour
         pos.x = Mathf.Clamp(pos.x, -20f, 20f);
         transform.position = pos;
 
+        // Footstep audio
+        if (!audioSource.isPlaying && isGrounded)
+            audioSource.Play();
+        else
+            audioSource.Pause();
+
         anim.SetFloat("Speed", 1);
     }
 
@@ -170,6 +197,8 @@ public class PlayerView : MonoBehaviour
     {
         if(isGrounded)
         {
+            audioSource.Pause();
+            GameService.Instance.SoundService.PlaySFX(SoundTypes.Jump);
             rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
             anim.SetTrigger("Jump");
         }
@@ -194,16 +223,21 @@ public class PlayerView : MonoBehaviour
 
     public void RestartPlayer()
     {
+        // 1. Reset player first
         transform.position = Vector3.zero;
         MoveCamera();
 
-        lastZPosition = transform.position.z;
+        lastZPosition = 0;
         distanceTravelled = 0;
+        uiService.UpdateDistanceText(0);
 
-        uiService.UpdateDistanceText(distanceTravelled);
+        // 2. Reset terrain based on player position
+        FindAnyObjectByType<TerrainPool>().ResetTerrain();
 
-        anim.SetTrigger("Restart");
+        // 3. Reset obstacles (must be AFTER terrain)
+        FindAnyObjectByType<ObstaclePool>().ResetObstacles();
 
+        anim.Rebind();
         hasDied = false;
     }
 

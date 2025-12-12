@@ -87,4 +87,23 @@ public class TerrainPool : MonoBehaviour
             }
         }
     }
+    public void ResetTerrain()
+    {
+        // Disable and return all active tiles to pool
+        for (int i = 0; i < activeTiles.Count; i++)
+        {
+            Transform t = activeTiles[i];
+            t.gameObject.SetActive(false);
+            pool.Enqueue(t);
+        }
+
+        activeTiles.Clear();
+
+        // Reset spawn pointer
+        nextSpawnZ = 0f;
+
+        // Preload again
+        for (int i = 0; i < preloadTiles; i++)
+            SpawnTile();
+    }
 }

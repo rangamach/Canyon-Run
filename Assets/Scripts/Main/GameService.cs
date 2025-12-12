@@ -4,6 +4,7 @@ public class GameService : GenericMonoSingleton<GameService>
 {
     //Services:
     public PlayerService PlayerService { get;private set; }
+    public SoundService SoundService { get; private set; }
 
     [Header("Services:")]
     [SerializeField] private UIService uiService;
@@ -12,6 +13,10 @@ public class GameService : GenericMonoSingleton<GameService>
     //Scriptable Objects:
     [Header("Scriptable Objects:")]
     [SerializeField] private PlayerSO playerSO;
+    [SerializeField] private SoundSO soundSO;
+
+    [SerializeField] private AudioSource bgAudio;
+    [SerializeField] private AudioSource sfxAudio;
 
 
     protected override void Awake()
@@ -26,5 +31,6 @@ public class GameService : GenericMonoSingleton<GameService>
     private void CreateServices()
     {
         this.PlayerService = new PlayerService(playerSO);
+        this.SoundService = new SoundService(soundSO,bgAudio,sfxAudio);
     }
 }

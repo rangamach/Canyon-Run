@@ -192,4 +192,18 @@ public class ObstaclePool : MonoBehaviour
 
         return null; // Pool empty (rare)
     }
+    public void ResetObstacles()
+    {
+        // Disable all active obstacles
+        for (int i = activeObstacles.Count - 1; i >= 0; i--)
+        {
+            Transform obj = activeObstacles[i];
+            obj.gameObject.SetActive(false);
+        }
+
+        activeObstacles.Clear();
+
+        // Reset spawn pointer
+        lastSpawnZ = player != null ? player.position.z : 0f;
+    }
 }   
