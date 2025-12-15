@@ -4,6 +4,7 @@ using UnityEngine.UI;
 public class UIService : MonoBehaviour
 {
     [Header("GameplayUI")]
+    [SerializeField] private RectTransform gameplayRT;
     [SerializeField] private ButtonState leftButton; 
     [SerializeField] private ButtonState rightButton;
     [SerializeField] private ButtonState jumpButton;
@@ -22,9 +23,8 @@ public class UIService : MonoBehaviour
     [SerializeField] private ButtonState controlsButton;
     [SerializeField] private ButtonState controlsBackButton;
     [SerializeField] private RectTransform controlsRT;
- 
+
     [SerializeField] private TextMeshProUGUI distanceText;
-   // [SerializeField] private TextMeshProUGUI fpsText;
 
     private float deltaTime = 0f;
 
@@ -51,6 +51,8 @@ public class UIService : MonoBehaviour
     public bool IsJumpPressed() => jumpButton.IsPressed;
     private void OnPauseClicked()
     {
+        GameService.Instance.PlayerService.PlayerAudio().Pause();
+
         GameService.Instance.SoundService.PlaySFX(SoundTypes.ButtonClick);
         if (gameOverRT.gameObject.activeInHierarchy) return;
 
@@ -60,20 +62,14 @@ public class UIService : MonoBehaviour
     }
     private void OnResumeClicked()
     {
+        GameService.Instance.PlayerService.PlayerAudio().Play();
+
         GameService.Instance.SoundService.PlaySFX(SoundTypes.ButtonClick);
 
         pauseRT.gameObject.SetActive(false);
 
         Time.timeScale = 1f;
     }
-
-    //private void Update()
-    //{
-    //    deltaTime += (Time.unscaledDeltaTime - deltaTime) * 0.1f;
-
-    //    float fps = 1.0f / deltaTime;
-    //    fpsText.text = $"FPS: {Mathf.Ceil(fps)}";
-    //}
     public void UpdateDistanceText(float distance)
     {
         if(distanceText)
@@ -89,13 +85,15 @@ public class UIService : MonoBehaviour
         startMenuRT.gameObject.SetActive(false);
         GameService.Instance.PlayerService.RestartPlayer();
 
-        bestDistanceStartText.text = $"Best Distance: {PlayerPrefs.GetFloat("Best")} m";
+        bestDistanceStartText.text = $"Best Distance: {PlayerPrefs.GetFloat("Best"):F1} m";
+
+        gameplayRT.gameObject.SetActive(true);
 
         Time.timeScale = 1f;
     }
     public void GameOverUI()
     {
-        bestDistanceGameOverText.text = $"Best Distance: {PlayerPrefs.GetFloat("Best")} m";
+        bestDistanceGameOverText.text = $"Best Distance: {PlayerPrefs.GetFloat("Best"):F1} m";
 
         gameOverRT.gameObject.SetActive(true);
     }
@@ -104,7 +102,7 @@ public class UIService : MonoBehaviour
         GameService.Instance.PlayerService.RestartPlayer();
         GameService.Instance.PlayerService.SetHasDied(true);
 
-        bestDistanceStartText.text = $"Best Distance: {PlayerPrefs.GetFloat("Best")} m";
+        bestDistanceStartText.text = $"Best Distance: {PlayerPrefs.GetFloat("Best"):F1} m";
 
         ShowStartMenu();
     }
@@ -122,6 +120,7 @@ public class UIService : MonoBehaviour
         gameOverRT.gameObject.SetActive(false);
         pauseRT.gameObject.SetActive(false);
         controlsRT.gameObject.SetActive(false);
+        gameplayRT.gameObject.SetActive(false);
 
         startMenuRT.gameObject.SetActive(true);
     }

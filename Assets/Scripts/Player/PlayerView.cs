@@ -246,5 +246,7 @@ public class PlayerView : MonoBehaviour
         hasDied = false;
     }
 
+    public AudioSource PlayerAudio() => audioSource;
+
     public void SetController(PlayerController controller) => this.playerController = controller;
 }
