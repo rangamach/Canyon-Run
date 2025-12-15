@@ -72,7 +72,7 @@ public class ObstaclePool : MonoBehaviour
         if (player == null) return;
 
         // Keep spawning ahead
-        while (lastSpawnZ < player.position.z + 100f)
+        while (lastSpawnZ < player.position.z + 1000f)
         {
             SpawnObstacleRow(lastSpawnZ + minDistanceZ);
             lastSpawnZ += minDistanceZ;
@@ -206,4 +206,4 @@ public class ObstaclePool : MonoBehaviour
         // Reset spawn pointer
         lastSpawnZ = player != null ? player.position.z : 0f;
     }
-}   
+}

@@ -79,7 +79,7 @@ public class PlayerView : MonoBehaviour
 
         this.mainCamera = camera.GetComponent<Camera>();
         this.mainCamera.fieldOfView = 60f;
-        this.mainCamera.nearClipPlane = 0.01f;
+        this.mainCamera.nearClipPlane = 0.3f;
         this.mainCamera.farClipPlane = 1000f;
         this.mainCamera.transform.rotation = Quaternion.Euler(20, 0, 0);
         SetCameraTransform();
@@ -166,17 +166,21 @@ public class PlayerView : MonoBehaviour
     {
         Vector3 velocity = rb.linearVelocity;
 
-        // ?? Increase speed as distance increases  
-        float speedMultiplier = 1f + (distanceTravelled / 1000f);
-        float currentSpeed = runSpeed * speedMultiplier;
+        // --- Forward speed with smooth acceleration ---
+        float minSpeed = runSpeed;        // starting speed
+        float maxSpeed = 75f;   // max speed cap
+        float distanceForMax = 2000f;     // distance at which max speed is reached
 
-        // Forward speed
-        velocity.z = currentSpeed;
+        // Smooth speed curve: accelerates quickly at first, then slows down
+        float targetSpeed = Mathf.Lerp(minSpeed, maxSpeed, distanceTravelled / distanceForMax);
+        targetSpeed = Mathf.Min(targetSpeed, maxSpeed);
 
-        // Side movement
-        velocity.x = moveInput * currentSpeed * 0.5f;
+        velocity.z = targetSpeed;
 
-        // Apply
+        // --- Side movement ---
+        velocity.x = moveInput * targetSpeed * 0.75f;
+
+        // Apply velocity
         rb.linearVelocity = velocity;
 
         // Clamp X manually
@@ -184,12 +188,13 @@ public class PlayerView : MonoBehaviour
         pos.x = Mathf.Clamp(pos.x, -20f, 20f);
         transform.position = pos;
 
-        // Footstep audio
+        // --- Footstep audio ---
         if (!audioSource.isPlaying && isGrounded)
             audioSource.Play();
-        else
+        else if (!isGrounded)
             audioSource.Pause();
 
+        // --- Animator speed ---
         anim.SetFloat("Speed", 1);
     }
 
