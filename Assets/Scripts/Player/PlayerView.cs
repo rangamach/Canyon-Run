@@ -240,7 +240,7 @@ public class PlayerView : MonoBehaviour
         FindAnyObjectByType<TerrainPool>().ResetTerrain();
 
         // 3. Reset obstacles (must be AFTER terrain)
-        FindAnyObjectByType<ObstaclePool>().ResetObstacles();
+        //FindAnyObjectByType<ObstaclePool>().ResetObstacles();
 
         anim.Rebind();
         hasDied = false;
