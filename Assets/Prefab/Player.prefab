@@ -2010,7 +2010,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerView
   hasDied: 0
   runSpeed: 35
-  jumpForce: 20
+  jumpForce: 25
   groundCheck: {fileID: 5220087296883846836}
   groundCheckRadius: 0.4
   groundLayer:

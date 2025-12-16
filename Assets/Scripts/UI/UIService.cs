@@ -23,10 +23,13 @@ public class UIService : MonoBehaviour
     [SerializeField] private ButtonState controlsButton;
     [SerializeField] private ButtonState controlsBackButton;
     [SerializeField] private RectTransform controlsRT;
-
+    [SerializeField] private Slider volumeSlider;
+    [SerializeField] private TextMeshProUGUI volumePercentText;
     [SerializeField] private TextMeshProUGUI distanceText;
 
-    private float deltaTime = 0f;
+    private SoundService soundService;
+    private PlayerService playerService;
+
 
     private void Awake()
     {
@@ -45,13 +48,20 @@ public class UIService : MonoBehaviour
         exitButtonStart.GetComponent<Button>().onClick.AddListener(StartExit);
         controlsButton.GetComponent<Button>().onClick.AddListener(ControlsButton);
         controlsBackButton.GetComponent<Button>().onClick.AddListener(ShowStartMenu);
+
+        this.soundService = GameService.Instance.SoundService;
+        this.playerService = GameService.Instance.PlayerService;
+
+        volumeSlider.onValueChanged.AddListener(OnVolumeSliderValueChange);
+
+        volumeSlider.value = 1f;
     }
     public bool IsLeftPressed() => leftButton.IsPressed;
     public bool IsRightPressed() => rightButton.IsPressed;
     public bool IsJumpPressed() => jumpButton.IsPressed;
     private void OnPauseClicked()
     {
-        GameService.Instance.PlayerService.PlayerAudio().Pause();
+        playerService.PlayerAudio().Pause();
 
         GameService.Instance.SoundService.PlaySFX(SoundTypes.ButtonClick);
         if (gameOverRT.gameObject.activeInHierarchy) return;
@@ -62,7 +72,7 @@ public class UIService : MonoBehaviour
     }
     private void OnResumeClicked()
     {
-        GameService.Instance.PlayerService.PlayerAudio().Play();
+        playerService.PlayerAudio().Play();
 
         GameService.Instance.SoundService.PlaySFX(SoundTypes.ButtonClick);
 
@@ -123,6 +133,13 @@ public class UIService : MonoBehaviour
         gameplayRT.gameObject.SetActive(false);
 
         startMenuRT.gameObject.SetActive(true);
+    }
+    private void OnVolumeSliderValueChange(float vol)
+    {
+        volumePercentText.text = $"{vol * 100f:F2}%";
+
+        soundService.UpdateAudioVolumes(vol);
+        playerService.PlayerAudio().volume = 0.25f * vol;
     }
     private void StartExit()
     {

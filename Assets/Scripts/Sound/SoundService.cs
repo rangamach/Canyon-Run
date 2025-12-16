@@ -13,11 +13,16 @@ public class SoundService
     private SoundSO SO;
     private AudioSource bgAS;
     private AudioSource sfxAS;
+    private float bgMax;
+    private float sfxMax;
     public SoundService(SoundSO soundSO, AudioSource bg,AudioSource sfx)
     {
         this.SO = soundSO;
         this.bgAS = bg;
         this.sfxAS = sfx;
+
+        bgMax = bgAS.volume;
+        sfxMax = sfxAS.volume;
 
         PlayBG();
     }
@@ -55,5 +60,10 @@ public class SoundService
             }
         }
         return null;
+    }
+    public void UpdateAudioVolumes(float vol)
+    {
+        bgAS.volume = vol * bgMax;
+        sfxAS.volume = vol * sfxMax;
     }
 }

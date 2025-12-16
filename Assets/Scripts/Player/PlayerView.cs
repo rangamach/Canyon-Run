@@ -17,6 +17,8 @@ public class PlayerView : MonoBehaviour
     private float lastZPosition = 0f;
     public bool hasDied;
     private AudioClip runningAudioClip;
+    private TerrainPool terrainPool;
+    private ObstaclePool obstaclePool;
 
     [SerializeField] private float runSpeed;
     [SerializeField] private float jumpForce;
@@ -24,7 +26,6 @@ public class PlayerView : MonoBehaviour
     [SerializeField] private float groundCheckRadius;
     [SerializeField] private LayerMask groundLayer;
     [SerializeField] private LayerMask obstacleLayer;
-
     private void Awake()
     {
         anim = GetComponent<Animator>();
@@ -46,6 +47,9 @@ public class PlayerView : MonoBehaviour
         runningAudioClip = GameService.Instance.SoundService.GetClip(SoundTypes.Running);
         audioSource.loop = true;
         audioSource.clip = runningAudioClip;
+
+        terrainPool = FindAnyObjectByType<TerrainPool>();
+        obstaclePool = FindAnyObjectByType<ObstaclePool>();
     }
     private void SpawnPlayer()
     {
@@ -236,11 +240,8 @@ public class PlayerView : MonoBehaviour
         distanceTravelled = 0;
         uiService.UpdateDistanceText(0);
 
-        // 2. Reset terrain based on player position
-        FindAnyObjectByType<TerrainPool>().ResetTerrain();
-
-        // 3. Reset obstacles (must be AFTER terrain)
-        //FindAnyObjectByType<ObstaclePool>().ResetObstacles();
+        terrainPool.ResetTerrain();
+        obstaclePool.ResetObstacles();
 
         anim.Rebind();
         hasDied = false;
