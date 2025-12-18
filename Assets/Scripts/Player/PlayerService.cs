@@ -10,4 +10,5 @@ public class PlayerService
     public void RestartPlayer() => playerController.RestartPlayer();
     public void SetHasDied(bool toggle) => playerController.SetHasDied(toggle);
     public AudioSource PlayerAudio() => playerController.PlayerAudio();
+    public int GetCurrentLives() => playerController.GetCurrentLives();
 }

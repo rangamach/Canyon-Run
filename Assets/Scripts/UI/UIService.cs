@@ -26,9 +26,14 @@ public class UIService : MonoBehaviour
     [SerializeField] private Slider volumeSlider;
     [SerializeField] private TextMeshProUGUI volumePercentText;
     [SerializeField] private TextMeshProUGUI distanceText;
+    [SerializeField] private Image[] hearts;
+    [SerializeField] private RectTransform pcControls;
+    [SerializeField] private RectTransform mobileControls;
 
     private SoundService soundService;
     private PlayerService playerService;
+
+    private bool isPausedBySystem;
 
 
     private void Awake()
@@ -39,6 +44,8 @@ public class UIService : MonoBehaviour
 
     private void Start()
     {
+        ResetHearts();
+
         pauseButton.gameObject.GetComponent<Button>().onClick.AddListener(OnPauseClicked);
         resumeButton.gameObject.GetComponent<Button>().onClick.AddListener(OnResumeClicked);
         replayButton.gameObject.GetComponent<Button>().onClick.AddListener(RestartButton);
@@ -55,29 +62,90 @@ public class UIService : MonoBehaviour
         volumeSlider.onValueChanged.AddListener(OnVolumeSliderValueChange);
 
         volumeSlider.value = 1f;
+
+        ChooseControls();
+    }
+    private void ChooseControls()
+    {
+        if(GameService.Instance.onMobile)
+        {
+            mobileControls.gameObject.SetActive(true);
+            pcControls.gameObject.SetActive(false);
+
+
+            jumpButton.gameObject.SetActive(true);
+            leftButton.gameObject.SetActive(true);
+            rightButton.gameObject.SetActive(true);
+        }
+        else
+        {
+            mobileControls.gameObject.SetActive(false);
+            pcControls.gameObject.SetActive(true);
+
+            jumpButton.gameObject.SetActive(false);
+            leftButton.gameObject.SetActive(false);
+            rightButton.gameObject.SetActive(false);
+        }
+    }
+    private void OnApplicationPause(bool pause)
+    {
+        if (pause)
+        {
+            PauseFromSystem();
+        }
+    }
+
+    private void OnApplicationFocus(bool hasFocus)
+    {
+        if (!hasFocus)
+        {
+            PauseFromSystem();
+        }
+    }
+
+    private void PauseFromSystem()
+    {
+        // Already paused ? do nothing
+        if (isPausedBySystem) return;
+
+        // Don't pause in start menu or game over
+        if (startMenuRT.gameObject.activeInHierarchy) return;
+        if (gameOverRT.gameObject.activeInHierarchy) return;
+
+        isPausedBySystem = true;
+
+        // Pause audio & time
+        playerService.PlayerAudio().Pause();
+        Time.timeScale = 0f;
+
+        // Show pause UI
+        pauseRT.gameObject.SetActive(true);
+    }
+    public void ResetHearts()
+    {
+        foreach (Image img in hearts)
+        {
+            img.gameObject.SetActive(true);
+        }
     }
     public bool IsLeftPressed() => leftButton.IsPressed;
     public bool IsRightPressed() => rightButton.IsPressed;
     public bool IsJumpPressed() => jumpButton.IsPressed;
     private void OnPauseClicked()
     {
-        playerService.PlayerAudio().Pause();
-
         GameService.Instance.SoundService.PlaySFX(SoundTypes.ButtonClick);
-        if (gameOverRT.gameObject.activeInHierarchy) return;
-
-        Time.timeScale = 0f;
-
-        pauseRT.gameObject.SetActive(true);
+        PauseFromSystem();
     }
     private void OnResumeClicked()
     {
-        playerService.PlayerAudio().Play();
+        if (!isPausedBySystem) return;
 
+        isPausedBySystem = false;
+
+        playerService.PlayerAudio().Play();
         GameService.Instance.SoundService.PlaySFX(SoundTypes.ButtonClick);
 
         pauseRT.gameObject.SetActive(false);
-
         Time.timeScale = 1f;
     }
     public void UpdateDistanceText(float distance)
@@ -141,6 +209,19 @@ public class UIService : MonoBehaviour
         soundService.UpdateAudioVolumes(vol);
         playerService.PlayerAudio().volume = 0.25f * vol;
     }
+    public void LoseHeart()
+    {
+        int currentLives = GameService.Instance.PlayerService.GetCurrentLives();
+
+        for(int i = 0;i<hearts.Length;i++)
+        {
+            if(i>currentLives - 1)
+            {
+                hearts[i].gameObject.SetActive(false);
+            }
+        }
+    }
+
     private void StartExit()
     {
         GameService.Instance.SoundService.PlaySFX(SoundTypes.ButtonClick);

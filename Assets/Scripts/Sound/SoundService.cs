@@ -6,6 +6,8 @@ public enum SoundTypes
     Background,
     Running,
     Jump,
+    Pop,
+    Ouch,
     Death,
 }
 public class SoundService

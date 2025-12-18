@@ -5,15 +5,15 @@ public class PlayerView : MonoBehaviour
     private PlayerInputAction pia;
     private PlayerController playerController;
     private UIService uiService;
-    private Animator anim;
-    private Rigidbody rb;
-    private AudioSource audioSource;
+    public Animator anim { get; private set; }
+    public Rigidbody rb { get; private set; } 
+    public AudioSource audioSource { get; private set; }
     private Camera mainCamera;
     private float moveInput;
     private bool isGrounded;
     private bool jumpPressed;
     private bool jumpWasPressedLastFrame;
-    private float distanceTravelled = 0f;
+    public float distanceTravelled { get; private set; }
     private float lastZPosition = 0f;
     public bool hasDied;
     private AudioClip runningAudioClip;
@@ -26,14 +26,20 @@ public class PlayerView : MonoBehaviour
     [SerializeField] private float groundCheckRadius;
     [SerializeField] private LayerMask groundLayer;
     [SerializeField] private LayerMask obstacleLayer;
+    private bool isVulnerable;
+    private float vulnerableTimer;
+    [SerializeField] private bool onMobile;
+
     private void Awake()
     {
         anim = GetComponent<Animator>();
         rb = GetComponent<Rigidbody>();
         audioSource = GetComponent<AudioSource>();
+        distanceTravelled = 0f;
+        isVulnerable = true;
 
         SpawnPlayer();
-        //SetupInput();
+        SetInputPlatform();
         CreateCamera();
     }
     private void Start()
@@ -51,6 +57,15 @@ public class PlayerView : MonoBehaviour
         terrainPool = FindAnyObjectByType<TerrainPool>();
         obstaclePool = FindAnyObjectByType<ObstaclePool>();
     }
+    private void SetInputPlatform()
+    {
+        this.onMobile = GameService.Instance.onMobile;
+
+        if(!onMobile)
+        {
+            SetupInput();
+        }
+    }
     private void SpawnPlayer()
     {
         SetTransform();
@@ -63,17 +78,17 @@ public class PlayerView : MonoBehaviour
         transform.rotation = Quaternion.identity;
         transform.localScale = Vector3.one;
     }
-    //private void SetupInput()
-    //{
-    //    pia = new PlayerInputAction();
+    private void SetupInput()
+    {
+        pia = new PlayerInputAction();
 
-    //    pia.Movement.Move.performed += ctx => moveInput = ctx.ReadValue<float>();
-    //    pia.Movement.Move.canceled += ctx => moveInput = 0f;
+        pia.Movement.Move.performed += ctx => moveInput = ctx.ReadValue<float>();
+        pia.Movement.Move.canceled += ctx => moveInput = 0f;
 
-    //    pia.Movement.Jump.performed += ctx => Jump();
+        pia.Movement.Jump.performed += ctx => Jump();
 
-    //    pia.Enable();
-    //}
+        pia.Enable();
+    }
     private void CreateCamera()
     {
         GameObject camera = new GameObject("MainCamera");
@@ -96,10 +111,27 @@ public class PlayerView : MonoBehaviour
     {
         if (hasDied) return;
 
+        if (isVulnerable)
+        {
+            vulnerableTimer = 0f;
+        }
+        else
+        {
+            vulnerableTimer += Time.deltaTime;
+
+            if(vulnerableTimer >= 0.5)
+            {
+                isVulnerable = true;
+            }
+        }
+
         isGrounded = Physics.CheckSphere(groundCheck.position, groundCheckRadius, groundLayer);
         anim.SetBool("Grounded", isGrounded);
 
-        CheckIfUIButtonPressed();
+        if(onMobile)
+        {
+            CheckIfUIButtonPressed();
+        }
     }
     private void CheckIfUIButtonPressed()
     {
@@ -137,27 +169,28 @@ public class PlayerView : MonoBehaviour
 
         MoveCamera();
     }
-    private void OnCollisionEnter(Collision collision)
+    private void OnTriggerEnter(Collider other)
     {
-        if(collision.gameObject.layer == LayerMask.NameToLayer("Obstacle"))
+        if (isVulnerable && other.gameObject.layer == LayerMask.NameToLayer("Obstacle"))
         {
-            if(!hasDied)
+            isVulnerable = false;
+            audioSource.PlayOneShot(GameService.Instance.SoundService.GetClip(SoundTypes.Ouch));
+
+            GameService.Instance.SoundService.PlaySFX(SoundTypes.Pop);
+
+            // Clear hit lane + next 2 lanes
+            if (playerController.GetCurrentLives() - 1 > 0)
             {
-                hasDied = true;
-                audioSource.Pause();
-                anim.SetTrigger("Death");
-                GameService.Instance.SoundService.PlaySFX(SoundTypes.Death);
+                obstaclePool.ClearRowsFromHit(other.transform.position.z, 2);
             }
 
-            if (distanceTravelled > PlayerPrefs.GetFloat("Best"))
-            {
-                PlayerPrefs.SetFloat("Best", distanceTravelled);
-                PlayerPrefs.Save();
-            }
 
-            uiService.GameOverUI();
+            playerController.SetCurrentLives(playerController.GetCurrentLives() - 1);
+
+            uiService.LoseHeart();
         }
     }
+
     private void MoveCamera()
     {
         Vector3 targetPosition = new Vector3(0f, transform.position.y + 15f, transform.position.z - 20f);
@@ -236,6 +269,8 @@ public class PlayerView : MonoBehaviour
         transform.position = Vector3.zero;
         MoveCamera();
 
+        playerController.ResetCurrentLives();
+        uiService.ResetHearts();
         lastZPosition = 0;
         distanceTravelled = 0;
         uiService.UpdateDistanceText(0);

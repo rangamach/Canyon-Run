@@ -206,4 +206,26 @@ public class ObstaclePool : MonoBehaviour
         // Reset spawn pointer
         lastSpawnZ = player != null ? player.position.z : 0f;
     }
+    public void ClearRowsFromHit(float hitZ, int rowsAhead = 2, float tolerance = 1.5f)
+    {
+        for (int row = 0; row <= rowsAhead; row++)
+        {
+            float targetZ = hitZ + row * minDistanceZ;
+
+            for (int i = activeObstacles.Count - 1; i >= 0; i--)
+            {
+                Transform obs = activeObstacles[i];
+
+                // Ignore obstacles behind player
+                if (obs.position.z <= player.position.z)
+                    continue;
+
+                if (Mathf.Abs(obs.position.z - targetZ) <= tolerance)
+                {
+                    obs.gameObject.SetActive(false);
+                    activeObstacles.RemoveAt(i);
+                }
+            }
+        }
+    }
 }

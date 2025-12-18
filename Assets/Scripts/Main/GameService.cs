@@ -1,4 +1,5 @@
 using UnityEngine;
+using static UnityEngine.AudioSettings;
 
 public class GameService : GenericMonoSingleton<GameService>
 {
@@ -18,10 +19,17 @@ public class GameService : GenericMonoSingleton<GameService>
     [SerializeField] private AudioSource bgAudio;
     [SerializeField] private AudioSource sfxAudio;
 
+    public bool onMobile { get; private set; }
+
 
     protected override void Awake()
     {
         base.Awake();
+
+        QualitySettings.vSyncCount = 0;
+        Application.targetFrameRate = 60;
+
+        SetInputPlatform();
     }
     private void Start()
     {
@@ -32,5 +40,9 @@ public class GameService : GenericMonoSingleton<GameService>
     {
         this.PlayerService = new PlayerService(playerSO);
         this.SoundService = new SoundService(soundSO,bgAudio,sfxAudio);
+    }
+    private void SetInputPlatform()
+    {
+        onMobile = Application.platform == RuntimePlatform.Android || Application.platform == RuntimePlatform.IPhonePlayer;
     }
 }
