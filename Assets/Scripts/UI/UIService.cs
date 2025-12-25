@@ -1,3 +1,4 @@
+using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -220,6 +221,15 @@ public class UIService : MonoBehaviour
                 hearts[i].gameObject.SetActive(false);
             }
         }
+    }
+
+    public void ShowGameOverCoroutine() => StartCoroutine(ShowGameOverUI());
+
+    private IEnumerator ShowGameOverUI()
+    {
+        yield return new WaitForSeconds(3f);
+
+        GameOverUI();
     }
 
     private void StartExit()

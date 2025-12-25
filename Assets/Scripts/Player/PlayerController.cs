@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 public class PlayerController
@@ -45,7 +46,9 @@ public class PlayerController
             PlayerPrefs.Save();
         }
 
-        GameService.Instance.UIService().GameOverUI();
+        GameService.Instance.UIService().ShowGameOverCoroutine();
+
+        //GameService.Instance.UIService().GameOverUI();
     }
     public void ResetCurrentLives() => playerModel.ResetCurrentLives();
 }
